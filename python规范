@@ -29,6 +29,75 @@ from xxx import *会将其他模块中的所有成员挨个赋值给当前范围
 ## 公共属性的注释写在属性声明的上方，与声明保持同样的
 缩进。行内注释应以#和一个空格作为开始，与后面的文字注释以
 一个空格隔开
+## 包（Package）、模块（Module）名使用意义完整的英文描述，采用小写加下划线（lower_with_under）的风格命名
+## 类（Class）名使用意义完整的英文描述，采用大写字母开头的单词（CapWords）风格命名
+## 函数（Function）、方法（Method）、函数参数（Function Parameters）名使用意义完整的英文描述，采用小写加下划线（lower_with_under）的风格命名
+## 变量（variable）采用小写加下划线（lower_with_under）的风格命名。常量（constant）采用大写加下划线（CAPS_WITH_UNDER）的风格命名
+## 类或对象的私有成员一般用单下划线_开头；对于需要被继承的基类成员，如果想要防止与派生类成员重名，可用双下划线__开头。
+https://docs.python.org/3/tutorial/classes.html#private-variables
+## 变量（variable）命名要有明确含义，使用完整的单词或大家基本可以理解的缩写，避免使人产生误解
+> 
+命名规范推荐表
+Type Public Internal
+Modules lower_with_under _lower_with_under
+Packages lower_with_under
+Classes CapWords
+Exceptions CapWords
+Functions lower_with_under() _lower_with_under()
+Global/Class Constants CAPS_WITH_UNDER _CAPS_WITH_UNDER
+Global/Class Variables lower_with_under lower_with_under
+Instance Variables lower_with_under
+lower_with_under (protected) or
+__lower_with_under (private)
+Method Names lower_with_under()
+_lower_with_under() (protected) or
+__lower_with_under() (private)
+Function/Method
+Parameters
+lower_with_under
+Local Variables lower_with_under
+
+## 与None作比较要使用“is”或“is not”，不要使用等号
+## 定义一个all不会把本模块的所有内容都暴露在外部，将允许外部访问的变量、函数和类的名字放进去
+## 避免直接使用dict[key]的方式从字典中获取value，如果一定要使用，需要注意当key not in dict时的异常捕获和处理
+## 对序列使用切片操作时，不建议使用负步进值进行切片
+## 传递实例类型参数后，函数内应使用isinstance函数进行参数检查，不要使用type
+## 尽量使用推导式代替重复的逻辑操作构造序列。但推导式必须考虑可读性，不推荐使用两个以上表达式的列表推导
+## 功能代码应该封装在函数或类中
+## 需要精确数值计算的场景，应使用decimal模块
+## 避免对不同对象使用同一个变量名
+## 当多个Python源码文件分不同子目录存放时，用包
+（package）形式管理各个目录下的模块。
+## 避免在代码中修改sys.path列表
+##尽量不使用for i in range(x)的方式循环处理集合数
+据，而应使用for x in iterable的方式
+enumerate
+## 避免在无关的变量或无关的概念之间重用名字，避免因
+重名而导致的意外赋值和错误引用
+Python的函数/类定义和C语言不同，函数/类定义语句实际上是给一个名字赋值。因此重复定义一个函数/
+类的名字不会导致错误，后定义的会覆盖前面的。但是重复定义很容易掩盖编码问题，让同一个名字的函数/类在
+不同的执行阶段具有不同的含义，不利于可读性，应予以禁止。 Python在解析一个被引用的名字时遵循LEGB顺序
+（Local - Enclosed - Global - Builtin），从内层一直查找到外层。内层定义的变量会覆盖外层的同名变量。在代码
+修改时，同名的变量容易导致错误的引用，也不利于代码可读性，应当尽量避免。
+
+## 使用try…except…结构对代码作保护时，需要在异常后
+使用finally…结构保证操作对象的释放
+## 不要使用“except:”语句来捕获所有异常
+## 不在except分支里面的raise都必须带异常
+## 尽量用异常来表示特殊情况，而不要返回None
+## 避免finally中可能发生的陷阱，不要在finally中使用
+return或者break语句
+## 禁止使用except X, x语法，应当使用except X as x
+说明： except X, x语法只在2.X版本支持，3.X版本不支持，有兼容性问题。而且，except X, x写法容易和多异常捕
+获的元组（tuple）表达式混淆。因此应该统一用except X as x方式。
+## 方法发生异常时要恢复到之前的对象状态
+
+
+
+
+
+
+
 
 
 
