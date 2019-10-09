@@ -1,0 +1,411 @@
+# -*- coding:utf-8 -*-
+
+
+import traceback
+import logging
+import sys
+import os
+from datetime import datetime
+
+sysPath = os.getcwdu()
+class RunMode():
+    GUI = 1  # 界面方式
+    CMD = 2  # 命令行方式
+
+
+class MessageLevel():
+    ERROR = 40  # 错误
+    WARNING = 30  # 告警
+    INFO = 20  # 提示
+
+
+class LogStyle():
+    EXCEL = 0  # 以EXCEL格式输出log信息
+    TXT = 1  # 以文本文件输出log信息
+    PRINT = 2  # 命令行下输出log信息
+
+
+class LogLevel():
+    ERROR = 40  # 错误
+    WARNING = 30  # 告警
+    INFO = 20  # 提示
+    DEBUG = 10  # 调试
+    LevelNames = {
+        ERROR: "ERROR",
+        WARNING: "WARNING",
+        INFO: "INFO",
+        DEBUG: "DEBUG"}
+
+    @classmethod
+    def getLevelName(cls, logLevel):
+        # ===================================================================
+        # 函数入参：logLevel:异常信息等级
+        # 函数出参：返回等级名称
+        # 函数功能：根据信息等级获取等级名称
+        # ===================================================================
+        return cls.LevelNames[logLevel]
+
+
+class CheckFileEnum():
+    # ==========================================================================
+    # '''
+    # '功能：对文件存在性和命名、文件类型的检查标记
+    # '''
+    # ==========================================================================
+    signExist = 1  # 文件/目录存在
+    signIsdir = 2  # 目录存在
+    signIsfile = 3  # 文件存在
+    signPathLen = 4  # 路径长度
+    signName = 5  # 文件名
+    signType = 6  # 文件类型
+    signZip = 7  # .zip文件
+    signInfo = 8  # 文件内容
+
+
+class CheckDataEnum():
+    # ==========================================================================
+    # '''
+    # '功能：对字符串数据的检查标记
+    # '''
+    # ==========================================================================
+    signIsalpha = 1  # 字母
+    signIsdigit = 2  # 数字
+    signStartswith = 3  # 开始
+    signEndswith = 4  # 结束
+    signFindall = 5  # 正则匹配返回列表
+    signMatch = 6  # 正则匹配返回元组
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 定义全局的字典，存储所有定义过的文件名
+loggerDict = {}  # 键：文件名，全部大写； 键值:logger
+
+
+class Logger():
+
+    def __init__(self, logFile, flg=0):
+        # ===================================================================
+        # 函数入参：
+        #    logFile：输出日志文件;flg=0:写入日志；flg=1:输出到控制台;
+        # 函数出参：无
+        # 函数功能：创建一个以文件名命名的logger
+        # ===================================================================
+        # 创建一个logger
+        if flg == 0:
+            self.logger = logging.getLogger(logFile)
+        else:
+            self.logger = logging.getLogger("PRINT")
+        self.logger.setLevel(logging.DEBUG)
+
+        # 设置logger格式
+        self.setFormat()
+
+        # 向logger中添加handler
+        if flg == 0:
+            # 创建一个handdler, 用于写入日志文件
+            self.handlerOperateFile(logFile)
+            self.addHandler(self.fh)
+        elif flg == 1:
+            # 创建一个handler，用于输出到控制台
+            self.handlerOperateStream()
+            self.addHandler(self.ch)
+
+    def handlerOperateFile(self, logFile):
+        # ===================================================================
+        # 函数入参：
+        #    logFile：输出日志文件
+        # 函数出参：无
+        # 函数功能：创建一个handler，用于写入日志文件
+        # ===================================================================
+        self.fh = logging.FileHandler(logFile)
+        self.fh.setLevel(logging.DEBUG)
+        # 设置handler格式
+        self.setHandlerFormat(self.fh)
+
+    def handlerOperateStream(self):
+        # ===================================================================
+        # 函数入参：无
+        # 函数出参：无
+        # 函数功能：创建一个handler，用于输出到控制台
+        # ===================================================================
+        self.ch = logging.StreamHandler()
+        self.ch.setLevel(logging.DEBUG)
+        # 设置handler格式
+        self.setHandlerFormat(self.ch)
+
+    def setFormat(self):
+        # ===================================================================
+        # 函数入参：无
+        # 函数出参：无
+        # 函数功能：设置handler的格式
+        # ===================================================================
+        dataFt = "%Y-%m-%d %H:%M:%S"
+        self.handlerFormat = logging.Formatter(fmt='%(asctime)s : %(levelname)s - %(message)s',
+                                               datefmt=dataFt)
+
+    def setHandlerFormat(self, handler):
+        # ===================================================================
+        # 函数入参：无
+        # 函数出参：无
+        # 函数功能：设置handler的格式
+        # ===================================================================
+        handler.setFormatter(self.handlerFormat)
+
+    def addHandler(self, handler):
+        # ===================================================================
+        # 函数入参：无
+        # 函数出参：无
+        # 函数功能：向logger中添加handler
+        # ===================================================================
+        self.logger.addHandler(handler)
+
+    def log(self, msg, level):
+        # ===================================================================
+        # 函数入参：msg:log信息；loglevel：日志等级
+        # 函数出参：无
+        # 函数功能：将log信息输出
+        # ===================================================================
+        if level == LogLevel.ERROR:
+            self.logger.error(ErrorStackInfo(msg))
+        elif level == LogLevel.WARNING:
+            self.logger.warning(msg)
+        elif level == LogLevel.INFO:
+            self.logger.info(msg)
+        elif level == LogLevel.DEBUG:
+            self.logger.debug(msg)
+
+
+class Log(object):
+    def __init__(self, logStyle=LogStyle.TXT, logPath=sysPath + u"\\MessageLog.txt"):
+
+        #        dataFt = "%Y-%m-%d %H:%M:%S"
+        #        logging.basicConfig(filename = logPath, level = logging.DEBUG,
+        #                         format =  '%(asctime)s : %(levelname)s - %(message)s',
+        #                         datefmt = dataFt)
+        self.checkValidFilePath(logPath)
+        self.checkValidStyle(logStyle)
+
+    def checkValidStyle(self, logStyle):
+        # ===================================================================
+        # 函数入参：
+        #    logStyle：输出日志格式
+        # 函数出参：无
+        # 函数功能：校验入参logLevel是否可有效识别
+        # ===================================================================
+        if logStyle in [LogStyle.EXCEL, LogStyle.TXT, LogStyle.PRINT]:
+            self.logStyle = logStyle
+        else:
+            raise Exception(u"'%s',不可识别的日志格式" % logStyle)
+
+    def checkValidFilePath(self, logPath):
+        # ===================================================================
+        # 函数入参：
+        #    logPath：输出日志文件路径
+        # 函数出参：无
+        # 函数功能：校验文件路径是否有效
+        # ===================================================================
+        dirName = os.path.dirname(logPath)
+        if os.path.isdir(dirName):
+            self.LogFilePath = logPath
+        else:
+            raise Exception(u"log输出路径不存在")
+
+    def checkValidLevel(self, level):
+        # ===================================================================
+        # 函数入参：
+        #    logStyle：输出日志格式
+        # 函数出参：无
+        # 函数功能：校验入参logLevel是否可有效识别
+        # ===================================================================
+        if level in [LogLevel.ERROR, LogLevel.WARNING, LogLevel.INFO,
+                     LogLevel.DEBUG]:
+            self.logLevel = level
+        else:
+            raise Exception(u"'%s',不可识别的日志格式" % level)
+
+    def log(self, msgInfo, logLevel=LogLevel.INFO):
+        # =======================================================================
+        # 函数入参：
+        #    logLevel:异常信息等级； 
+        #    msgInfo:要记录的异常信息；一般为字符串，若以excel的格式输出log，则msgInfo数据类型为字典，格式如下：
+        #    {"页签名":[[value1, value2, ...], [value1, value2, ...],...]}    
+        # 函数出参：无
+        # 函数功能：输出各种不同类型的日志
+        # =======================================================================
+        self.checkValidLevel(logLevel)
+        try:
+            self.dataFt = "%Y-%m-%d %H:%M:%S"
+            self.formatStr = '%s : %s - %s\n'
+            if self.logStyle == LogStyle.EXCEL:
+                if isinstance(msgInfo, dict):
+                    #                    ExcelHandlers.xlsExtend(msgInfo, self.LogFilePath)
+                    #                else:
+                    raise Exception(u"'%s',不可识别的信息格式" % type(msgInfo))
+            else:
+                if self.logStyle == LogStyle.TXT:
+                    if isinstance(msgInfo, unicode) or isinstance(msgInfo, str):
+                        fp = open(self.LogFilePath, 'a+')
+                        self.toLog(logLevel, msgInfo, fp)
+                        fp.close()
+                    elif isinstance(msgInfo, list):
+                        for strValue in msgInfo:
+                            fp = open(self.LogFilePath, 'a+')
+                            self.toLog(logLevel, strValue, fp)
+                            fp.close()
+                elif self.logStyle == LogStyle.PRINT:
+                    if isinstance(msgInfo, unicode) or isinstance(msgInfo, str):
+                        self.toPrint(logLevel, msgInfo)
+                    elif isinstance(msgInfo, list):
+                        for strValue in msgInfo:
+                            self.toPrint(logLevel, strValue)
+        except Exception, e:
+            raise Exception(unicode(e))
+
+    #        try:
+    #            if self.logStyle == LogStyle.EXCEL:
+    #                if isinstance(msgInfo, dict):
+    #                    ExcelHandlers.xlsExtend(msgInfo, self.LogFilePath)
+    #                else:
+    #                    raise Exception(u"'%s',不可识别的信息格式" % type(msgInfo))
+    #            else:
+    ##                if self.logStyle == LogStyle.TXT:
+    ##                    logger = getLogger(self.LogFilePath, 0)
+    ##                elif self.logStyle == LogStyle.PRINT:
+    ##                    logger = getLogger(self.LogFilePath, 1)
+    #                if self.logStyle == LogStyle.TXT:
+    #                    if isinstance(msgInfo, unicode) or isinstance(msgInfo, str):
+    #                        self.toLog(logLevel, msgInfo)
+    #    #                    logger.log(msgInfo, logLevel)
+    #                    elif isinstance(msgInfo, list):  #若为list, 默认都是提示信息
+    #                        if self.logStyle == LogStyle.TXT:
+    #                            for strValue in msgInfo:
+    #                                self.toLog(logLevel, strValue)
+    #    #                            logger.log(strValue, LogLevel.INFO)
+    #                    else:
+    #                        raise Exception(u"'%s',不可识别的信息格式" % type(msgInfo))
+    #
+    #        except Exception, e:
+    #            raise Exception(unicode(e))
+    def toPrint(self, logLevel, msg):
+        # =======================================================================
+        # 
+        # =======================================================================
+        if logLevel in (LogLevel.INFO, LogLevel.DEBUG, LogLevel.WARNING):
+            if logLevel == LogLevel.INFO:
+                logLevel = "INFO"
+            elif logLevel == LogLevel.DEBUG:
+                logLevel = "DEBUG"
+            else:
+                logLevel = "WARNING"
+            print self.formatStr % (datetime.now().strftime(self.dataFt),
+                                    logLevel,
+                                    msg)
+
+        elif logLevel == LogLevel.ERROR:
+            logLevel = "ERROR"
+            print self.formatStr % (datetime.now().strftime(self.dataFt),
+                                    logLevel,
+                                    ErrorStackInfo(msg))
+
+    def toLog(self, logLevel, msg, fp):
+        # =======================================================================
+        # 
+        # =======================================================================
+        if logLevel in (LogLevel.INFO, LogLevel.DEBUG, LogLevel.WARNING):
+            if logLevel == LogLevel.INFO:
+                logLevel = "INFO"
+            elif logLevel == LogLevel.DEBUG:
+                logLevel = "DEBUG"
+            else:
+                logLevel = "WARNING"
+            fp.write(self.formatStr % (datetime.now().strftime(self.dataFt),
+                                       logLevel,
+                                       msg))
+        elif logLevel == LogLevel.ERROR:
+            logLevel = "ERROR"
+            fp.write(self.formatStr % (datetime.now().strftime(self.dataFt),
+                                       logLevel,
+                                       ErrorStackInfo(msg)))
+
+    #        if logLevel == LogLevel.INFO:
+    #            logging.info(msg)
+    #        elif logLevel == LogLevel.DEBUG:
+    #            logging.debug(msg)
+    #        elif logLevel == LogLevel.WARNING:
+    #
+    #            logging.warning(msg)
+    #        elif logLevel == LogLevel.ERROR:
+    #            logging.error(ErrorStackInfo(msg))
+
+    def strSetToFile(self, strLst):
+        # =======================================================================
+        # 函数入参：strLst:字符串集合，列表
+        # 函数出参：无
+        # 函数功能：将字符串列表写入日志文件中
+        # =======================================================================
+        fp = open(self.LogFilePath, 'a+')
+        for strValue in strLst:
+            fp.write(strValue + u"\n")
+        fp.close()
+
+
+def getLogger(filePath, flg=0):
+    # =======================================================================
+    # 函数入参：filePath:日志文件路径
+    # 函数出参：无
+    # 函数功能：返回以日志文件命名的logger对象
+    # =======================================================================
+    global loggerDict
+    if flg == 0:
+        logger = loggerDict.get(filePath)
+    else:
+        logger = loggerDict.get("PRINT")
+    if logger:
+        return logger
+    else:
+        logger = Logger(filePath, flg)
+        if flg == 0:
+            loggerDict[filePath] = logger
+        else:
+            loggerDict["PRINT"] = logger
+    return logger
+
+
+def ErrorStackInfo(strText):
+    # =======================================================================
+    # 函数入参：strText:字符串
+    # 函数出参：无
+    # 函数功能：详细记录错误等级的日志信息
+    # =======================================================================
+    strStackInfo = compact_traceback(strText)
+    return strText + u'\n' + strStackInfo
+
+
+def compact_traceback(strInfo):
+    # =======================================================================
+    # 函数入参：strInfo:字符串
+    # 函数出参：无
+    # 函数功能：详细记录错误等级的栈信息
+    # =======================================================================
+    exceptionType, value, tb = sys.exc_info()
+    if exceptionType is None:
+        return strInfo
+    tracelist = traceback.format_exception(exceptionType, value, tb)
+    info = u"".join(tracelist)
+    return info
+
+
+if __name__ == "__main__":
+    logObj = Log(logPath=u"D:\\MessageLog.txt")
+    logObj.log('msgInfo', LogLevel.INFO)
