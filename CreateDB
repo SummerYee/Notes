@@ -1,0 +1,26 @@
+# -*- coding: utf-8 -*-
+# @Author   : dWX753787
+# @Date     : 2019/8/22
+
+
+class CreateDB:
+    def __init__(self, conn, cur, database='mysql'):
+        self.conn = conn  # 数据库地址
+        self.cur = cur  # 连接的数据库名称
+        self.database = database  # 数据库名
+
+    def create_database(self):
+        # 创建数据库
+        sql_str = "CREATE DATABASE %s DEFAULT CHARSET utf8 COLLATE utf8_general_ci;" % self.database
+        self.cur.execute(sql_str)
+        self.conn.commit()
+
+    def drop_database(self):
+        # 删除数据库
+        sql_str = "DROP DATABASE IF EXISTS %s;" % self.database
+        self.cur.execute(sql_str)
+        self.conn.commit()
+
+if __name__ == '__main__':
+    # c = CreateDB('127.0.0.1')
+    pass
