@@ -1,0 +1,32 @@
+# -*- coding: utf-8 -*-
+# @Author   : dWX753787
+# @Date     : 2019/8/22
+import pymysql
+
+
+class ControlDB:
+    def __init__(self, database, host='127.0.0.1', port=3306, user='root', password='root',  charset='utf8'):
+        self.host = host
+        self.port = port
+        self.user = user
+        self.password = password
+        self.database = database
+        self.charset = charset
+
+    def get_connect(self):
+        """
+        得到连接信息
+        :return: conn.cursor()
+        """
+        try:
+            if not self.database:
+                raise (NameError, u"没有设置数据库信息")
+
+            conn = pymysql.connect(host=self.host, port=self.port, user=self.user, passwd=self.password,
+                                   database=self.database, charset=self.charset)
+            cur = conn.cursor()
+
+            return conn, cur
+        except Exception as e:
+            return None, None
+
