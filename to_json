@@ -15,15 +15,15 @@ class DataJson:
 
     def get_token(self):
         # 应用静态token
-        static_token = '>N@S5wsro<H4~GU<OmU>2u]lZLA7)QFU0us8kF0<a!V*HgD8GXN1526029425621'
+        static_token = 'xxxx'
         str_static_token = static_token.encode('utf-8')
         bs64_static_token = base64.b64encode(str_static_token)
         bs64_static_token = bs64_static_token.decode('utf-8')
         # API中心APPID
-        app_id = 'com.huawei.autotest'
+        app_id = 'xxxx'
         # 输入报文：{"appId":"app_common888888","credential":"加密后的静态Token,通过base64加密即可"}
         input_packet = {"appId": app_id, "credential": bs64_static_token}
-        dyna_token = requests.post('http://w3cloud.huawei.com/ApiCommonQuery/appToken/getRestAppDynamicToken',
+        dyna_token = requests.post('xxxx',
                                    json=input_packet)
         dynamic_token = dyna_token.json()['result']
         return dynamic_token
