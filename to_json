@@ -1,0 +1,48 @@
+# -*- coding: utf-8 -*-
+# @Author   : dWX753787
+# @Date     : 2019/8/26
+import base64
+import requests
+import json
+
+
+class DataJson:
+    def __init__(self, params, url, page_index, page_size=1000):
+        self.params = params
+        self.url = url
+        self.page_index = page_index
+        self.page_size = page_size
+
+    def get_token(self):
+        # 应用静态token
+        static_token = '>N@S5wsro<H4~GU<OmU>2u]lZLA7)QFU0us8kF0<a!V*HgD8GXN1526029425621'
+        str_static_token = static_token.encode('utf-8')
+        bs64_static_token = base64.b64encode(str_static_token)
+        bs64_static_token = bs64_static_token.decode('utf-8')
+        # API中心APPID
+        app_id = 'com.huawei.autotest'
+        # 输入报文：{"appId":"app_common888888","credential":"加密后的静态Token,通过base64加密即可"}
+        input_packet = {"appId": app_id, "credential": bs64_static_token}
+        dyna_token = requests.post('http://w3cloud.huawei.com/ApiCommonQuery/appToken/getRestAppDynamicToken',
+                                   json=input_packet)
+        dynamic_token = dyna_token.json()['result']
+        return dynamic_token
+
+    def get_json(self):
+        dynamic_token = self.get_token()
+        data_json = json.dumps(self.params)
+        params = {
+            'params': data_json,
+            'X-Huawei-Auth': dynamic_token,
+            'pageIndex': self.page_index,
+            'pageSize': self.page_size
+        }
+        r = requests.get(url=self.url, params=params)
+        r_json = r.json().get('result')
+        return r_json
+
+
+if __name__ == '__main__':
+    a = DataJson('ddf', 'dyf', 1)
+    token = a.get_token()
+    print(token)
